@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carnet Digital - TORNEO PRO</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 90vh; }
+        .card { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-top: 8px solid #28a745; }
+        h2 { color: #333; text-align: center; margin-bottom: 2px; }
+        .subtitle { text-align: center; color: #28a745; font-size: 13px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 1px; }
+        .info-group { margin-bottom: 12px; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; }
+        .label { font-size: 11px; color: #888; text-transform: uppercase; font-weight: bold; }
+        .value { font-size: 15px; color: #222; font-weight: 600; margin-top: 2px; }
+        .stats { display: flex; justify-content: space-around; background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: center; border: 1px solid #e9ecef; }
+        .stat-box { flex: 1; }
+        .stat-num { font-size: 26px; font-weight: bold; color: #28a745; }
+        .badge-yellow { color: #d39e00 !important; }
+        .loading, .error { text-align: center; color: #666; font-size: 16px; margin-top: 40px; }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="card-container" style="display: none;">
+        <h2>TORNEO PRO</h2>
+        <div class="subtitle">Credencial Oficial Verificada</div>
+        
+        <div class="info-group">
+            <div class="label">Jugador</div>
+            <div class="value" id="val-nombre">-</div>
+        </div>
+        <div class="info-group">
+            <div class="label">Equipo</div>
+            <div class="value" id="val-equipo">-</div>
+        </div>
+        <div class="info-group">
+            <div class="label">Cédula (ID)</div>
+            <div class="value" id="val-cedula">-</div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div class="label">Goles</div>
+                <div class="stat-num" id="val-goles">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="label">T. Amarillas</div>
+                <div class="stat-num badge-yellow" id="val-amarillas">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mensaje" class="loading">Cargando credencial oficial...</div>
+
+    <script>
+        // Credenciales públicas de Supabase
+        const SUPABASE_URL = "https://qemnpczeydlvfaeuqqob.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_nRM29VMTudUU9siLsbAD8A_aBgWM-LC";
+
+        async function cargarJugador() {
+            const params = new URLSearchParams(window.location.search);
+            const cedula = params.get('cedula');
+
+            if (!cedula) {
+                document.getElementById('mensaje').innerHTML = "<h3 style='color:red;'>Error</h3><p>No se especificó la cédula del jugador.</p>";
+                return;
+            }
+
+            try {
+                let response = await fetch(`${SUPABASE_URL}/rest/v1/jugadores?cedula=eq.${cedula}&select=*`, {
+                    headers: {
+                        "apikey": SUPABASE_KEY,
+                        "Authorization": `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+
+                let data = await response.json();
+
+                if (!data || data.length === 0) {
+                    document.getElementById('mensaje').innerHTML = "<h3 style='color:#dc3545;'>Carnet No Válido</h3><p>Este jugador no se encuentra registrado en el torneo.</p>";
+                    return;
+                }
+
+                let j = data[0];
+                document.getElementById('val-nombre').innerText = j.nombre || '-';
+                document.getElementById('val-equipo').innerText = j.equipo || '-';
+                document.getElementById('val-cedula').innerText = j.cedula || '-';
+                document.getElementById('val-goles').innerText = j.goles || 0;
+                document.getElementById('val-amarillas').innerText = j.amarillas || 0;
+
+                document.getElementById('mensaje').style.display = 'none';
+                document.getElementById('card-container').style.display = 'block';
+
+            } catch (error) {
+                document.getElementById('mensaje').innerHTML = "<h3 style='color:red;'>Error de red</h3><p>No se pudo conectar con la base de datos.</p>";
+            }
+        }
+
+        cargarJugador();
+    </script>
+</body>
+</html>
